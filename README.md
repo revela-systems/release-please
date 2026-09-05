@@ -133,9 +133,12 @@ END_COMMIT_OVERRIDE
 The next time Release Please runs, it will use that override section as the
 commit message instead of the merged commit message.
 
-:warning: **Important:** This feature will not work with plain merges because
-release-please does not know which commit(s) to apply the override to. [We
-recommend using squash-merge instead](#linear-git-commit-history-use-squash-merge).
+:warning: **Important:** This feature traditionally expects squash-merge so that
+overrides are applied once per PR. If using merge commits on the default branch,
+enable `"ignore-intra-branch-commits": true` in your `release-please-config.json`
+(or pass `--ignore-intra-branch-commits`) so that intra-branch commits are ignored
+and the override is evaluated once on the merge commit. Otherwise, [we recommend
+using squash-merge](#linear-git-commit-history-use-squash-merge).
 
 ## Release Please bot does not create a release PR. Why?
 
