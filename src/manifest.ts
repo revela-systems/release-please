@@ -142,6 +142,7 @@ export interface ReleaserConfig {
   skipSnapshot?: boolean;
   // Manifest only
   excludePaths?: string[];
+  ignoreIntraBranchCommits?: boolean;
 }
 
 export interface CandidateReleasePullRequest {
@@ -193,6 +194,7 @@ interface ReleaserConfigJson {
   'skip-snapshot'?: boolean; // Java-only
   'initial-version'?: string;
   'exclude-paths'?: string[]; // manifest-only
+  'ignore-intra-branch-commits'?: boolean;
   'date-format'?: string;
 }
 
@@ -220,6 +222,7 @@ export interface ManifestOptions {
   commitBatchSize?: number;
   logger?: Logger;
   dateFormat?: string;
+  ignoreIntraBranchCommits?: boolean;
 }
 
 export interface ReleaserPackageConfig extends ReleaserConfigJson {
@@ -334,6 +337,7 @@ export class Manifest {
   readonly releaseSearchDepth: number;
   readonly commitSearchDepth: number;
   readonly commitBatchSize: number;
+  readonly ignoreIntraBranchCommits: boolean;
   readonly logger: Logger;
   private pullRequestOverflowHandler: PullRequestOverflowHandler;
 
@@ -405,6 +409,9 @@ export class Manifest {
       manifestOptions?.commitSearchDepth || DEFAULT_COMMIT_SEARCH_DEPTH;
     this.commitBatchSize =
       manifestOptions?.commitBatchSize || DEFAULT_COMMIT_BATCH_SIZE;
+    this.ignoreIntraBranchCommits =
+      manifestOptions?.ignoreIntraBranchCommits ??
+      Object.values(repositoryConfig).some(c => c.ignoreIntraBranchCommits);
     this.logger = manifestOptions?.logger ?? defaultLogger;
     this.plugins = (manifestOptions?.plugins || []).map(pluginType =>
       buildPlugin({
@@ -639,6 +646,7 @@ export class Manifest {
       maxResults: this.commitSearchDepth,
       backfillFiles: true,
       batchSize: this.commitBatchSize,
+      ignoreIntraBranchCommits: this.ignoreIntraBranchCommits,
     });
     const releaseShas = new Set(Object.values(releaseShasByPath));
     this.logger.debug(releaseShas);
@@ -1427,6 +1435,7 @@ function extractReleaserConfig(
     skipSnapshot: config['skip-snapshot'],
     initialVersion: config['initial-version'],
     excludePaths: config['exclude-paths'],
+    ignoreIntraBranchCommits: config['ignore-intra-branch-commits'],
     dateFormat: config['date-format'],
   };
 }
@@ -1482,6 +1491,7 @@ async function parseConfig(
     commitSearchDepth: config['commit-search-depth'],
     commitBatchSize: config['commit-batch-size'],
     sequentialCalls: config['sequential-calls'],
+    ignoreIntraBranchCommits: config['ignore-intra-branch-commits'],
   };
   return {config: repositoryConfig, options: manifestOptions};
 }
@@ -1624,6 +1634,7 @@ async function latestReleaseVersion(
   // been released
   const generator = github.mergeCommitIterator(targetBranch, {
     maxResults: 250,
+    ignoreIntraBranchCommits: config.ignoreIntraBranchCommits,
   });
   for await (const commitWithPullRequest of generator) {
     commitShas.add(commitWithPullRequest.sha);
@@ -1793,6 +1804,9 @@ function mergeReleaserConfig(
     initialVersion: pathConfig.initialVersion ?? defaultConfig.initialVersion,
     extraLabels: pathConfig.extraLabels ?? defaultConfig.extraLabels,
     excludePaths: pathConfig.excludePaths ?? defaultConfig.excludePaths,
+    ignoreIntraBranchCommits:
+      pathConfig.ignoreIntraBranchCommits ??
+      defaultConfig.ignoreIntraBranchCommits,
     dateFormat: pathConfig.dateFormat ?? defaultConfig.dateFormat,
   };
 }

@@ -245,6 +245,9 @@ Options:
                                                                         [string]
   --date-format                     format in strftime format for updating dates
                                                                         [string]
+  --ignore-intra-branch-commits     ignore intra-branch commits on merged pull
+                                    requests when calculating release version
+                                    and changelog                      [boolean]
   --label                           comma-separated list of labels to add to
                                     from release PR
                                                [default: "autorelease: pending"]

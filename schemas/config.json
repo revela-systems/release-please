@@ -254,6 +254,10 @@
           "description": "Releases the initial library with a specified version",
           "type": "string"
         },
+        "ignore-intra-branch-commits": {
+          "description": "Ignore intra-branch commits on merged pull requests when parsing changelog and determining release versions. Defaults to `false`.",
+          "type": "boolean"
+        },
         "component-no-space": {
           "description": "release-please automatically adds ` ` (space) in front of parsed ${component}. This option indicates whether that behaviour should be disabled. Defaults to `false`",
           "type": "boolean"
@@ -501,6 +505,7 @@
     "snapshot-label": true,
     "initial-version": true,
     "exclude-paths": true,
+    "ignore-intra-branch-commits": true,
     "component-no-space": false
   }
 }

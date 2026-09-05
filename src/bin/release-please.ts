@@ -64,6 +64,7 @@ interface GitHubArgs {
 interface ManifestArgs {
   configFile?: string;
   manifestFile?: string;
+  ignoreIntraBranchCommits?: boolean;
 }
 
 interface VersioningArgs {
@@ -95,6 +96,7 @@ interface ReleaseArgs {
   releaseLabel?: string;
   snapshotLabel?: string;
   label?: string;
+  ignoreIntraBranchCommits?: boolean;
 }
 
 interface PullRequestArgs {
@@ -110,6 +112,7 @@ interface PullRequestStrategyArgs {
   changelogPath?: string;
   changelogHost?: string;
   versioningStrategy?: VersioningStrategyType;
+  ignoreIntraBranchCommits?: boolean;
 
   // for Ruby: TODO refactor to find version.rb like Python finds version.py
   // and then remove this property
@@ -376,6 +379,11 @@ function pullRequestStrategyOptions(yargs: yargs.Argv): yargs.Argv {
       describe: 'format in strftime format for updating dates',
       type: 'string',
     })
+    .option('ignore-intra-branch-commits', {
+      describe:
+        'ignore intra-branch commits on merged pull requests when calculating release version and changelog',
+      type: 'boolean',
+    })
     .middleware(_argv => {
       const argv = _argv as CreatePullRequestArgs;
 
@@ -509,6 +517,7 @@ const createReleasePullRequestCommand: yargs.CommandModule<
           versionFile: argv.versionFile,
           includeComponentInTag: argv.monorepoTags,
           includeVInTag: argv.includeVInTags,
+          ignoreIntraBranchCommits: argv.ignoreIntraBranchCommits,
         },
         extractManifestOptions(argv),
         argv.path
@@ -598,6 +607,7 @@ const createReleaseCommand: yargs.CommandModule<{}, CreateReleaseArgs> = {
           prerelease: argv.prerelease,
           includeComponentInTag: argv.monorepoTags,
           includeVInTag: argv.includeVInTags,
+          ignoreIntraBranchCommits: argv.ignoreIntraBranchCommits,
         },
         extractManifestOptions(argv),
         argv.path
@@ -947,6 +957,12 @@ function extractManifestOptions(
   }
   if ('draftPullRequest' in argv && argv.draftPullRequest !== undefined) {
     manifestOptions.draftPullRequest = argv.draftPullRequest;
+  }
+  if (
+    'ignoreIntraBranchCommits' in argv &&
+    argv.ignoreIntraBranchCommits !== undefined
+  ) {
+    manifestOptions.ignoreIntraBranchCommits = argv.ignoreIntraBranchCommits;
   }
   return manifestOptions;
 }

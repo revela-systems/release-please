@@ -52,6 +52,20 @@ describe('schemas', () => {
       });
     }
 
+    it('allows ignore-intra-branch-commits at top level and package level', () => {
+      const config = {
+        'ignore-intra-branch-commits': true,
+        packages: {
+          '.': {
+            'ignore-intra-branch-commits': true,
+          },
+        },
+      };
+      const result = configValidator(config);
+      expect(result).to.be.true;
+      expect(configValidator.errors).to.be.null;
+    });
+
     it('rejects extra properties', () => {
       const config = {
         extraField: 'foo',

@@ -33,6 +33,7 @@ export interface ScmCommitIteratorOptions {
   maxResults?: number;
   backfillFiles?: boolean;
   batchSize?: number;
+  ignoreIntraBranchCommits?: boolean;
 }
 
 export interface ScmReleaseIteratorOptions {

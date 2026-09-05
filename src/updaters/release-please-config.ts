@@ -84,6 +84,7 @@ function releaserConfigToJsonConfig(
     'extra-files': config.extraFiles,
     'version-file': config.versionFile,
     'snapshot-label': config.snapshotLabels?.join(','), // Java-only
+    'ignore-intra-branch-commits': config.ignoreIntraBranchCommits,
     'date-format': config.dateFormat,
   };
   return jsonConfig;

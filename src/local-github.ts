@@ -568,6 +568,9 @@ export class LocalGitHub implements Scm {
 
     const ref = await this.ensureRef(targetBranch);
     const args = ['log', ref, `--pretty=format:${format}`];
+    if (options?.ignoreIntraBranchCommits) {
+      args.push('--first-parent');
+    }
     if (backfillFiles) {
       args.push('--name-only');
     }

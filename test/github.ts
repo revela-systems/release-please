@@ -606,6 +606,114 @@ describe('GitHub', () => {
       snapshot(commits!);
       req.done();
     });
+
+    it('filters out intra-branch commits when ignoreIntraBranchCommits is enabled', async () => {
+      const graphql = {
+        repository: {
+          ref: {
+            target: {
+              history: {
+                nodes: [
+                  {
+                    sha: 'merge-sha-100',
+                    message:
+                      'Merge pull request #100 from feat-branch\n\nfeat: add awesome feature',
+                    associatedPullRequests: {
+                      nodes: [
+                        {
+                          number: 100,
+                          title: 'feat: add awesome feature',
+                          body: 'BEGIN_COMMIT_OVERRIDE\nfeat: override feature\nEND_COMMIT_OVERRIDE',
+                          baseRefName: 'main',
+                          headRefName: 'feat-branch',
+                          labels: {nodes: []},
+                          mergeCommit: {oid: 'merge-sha-100'},
+                          files: {
+                            nodes: [{path: 'src/feature.ts'}],
+                            pageInfo: {hasNextPage: false},
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    sha: 'branch-c2',
+                    message: 'fix: fix bug on branch',
+                    associatedPullRequests: {
+                      nodes: [
+                        {
+                          number: 100,
+                          title: 'feat: add awesome feature',
+                          body: 'BEGIN_COMMIT_OVERRIDE\nfeat: override feature\nEND_COMMIT_OVERRIDE',
+                          baseRefName: 'main',
+                          headRefName: 'feat-branch',
+                          labels: {nodes: []},
+                          mergeCommit: {oid: 'merge-sha-100'},
+                          files: {
+                            nodes: [{path: 'src/feature.ts'}],
+                            pageInfo: {hasNextPage: false},
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    sha: 'branch-c1',
+                    message: 'feat: initial branch commit',
+                    associatedPullRequests: {
+                      nodes: [
+                        {
+                          number: 100,
+                          title: 'feat: add awesome feature',
+                          body: 'BEGIN_COMMIT_OVERRIDE\nfeat: override feature\nEND_COMMIT_OVERRIDE',
+                          baseRefName: 'main',
+                          headRefName: 'feat-branch',
+                          labels: {nodes: []},
+                          mergeCommit: {oid: 'merge-sha-100'},
+                          files: {
+                            nodes: [{path: 'src/feature.ts'}],
+                            pageInfo: {hasNextPage: false},
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    sha: 'direct-commit-sha',
+                    message: 'chore: update readme',
+                    associatedPullRequests: {
+                      nodes: [],
+                    },
+                  },
+                ],
+                pageInfo: {
+                  hasNextPage: false,
+                },
+              },
+            },
+          },
+        },
+      };
+
+      req.post('/graphql').reply(200, {
+        data: graphql,
+      });
+
+      const generator = github.mergeCommitIterator('main', {
+        ignoreIntraBranchCommits: true,
+      });
+      const commits: Commit[] = [];
+      for await (const commit of generator) {
+        commits.push(commit);
+      }
+      expect(commits).lengthOf(2);
+      expect(commits[0].sha).to.eql('merge-sha-100');
+      expect(commits[0].pullRequest?.number).to.eql(100);
+      expect(commits[0].files).to.eql(['src/feature.ts']);
+      expect(commits[1].sha).to.eql('direct-commit-sha');
+      expect(commits[1].pullRequest).to.be.undefined;
+      req.done();
+    });
   });
 
   describe('getCommitFiles', () => {

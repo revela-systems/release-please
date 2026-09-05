@@ -343,6 +343,15 @@ export class GitHub implements Scm {
     }
     const commitData: Commit[] = [];
     for (const graphCommit of commits) {
+      if (options.ignoreIntraBranchCommits) {
+        const isIntraBranchCommit =
+          graphCommit.associatedPullRequests.nodes.some(
+            pr => pr.mergeCommit?.oid && pr.mergeCommit.oid !== graphCommit.sha
+          );
+        if (isIntraBranchCommit) {
+          continue;
+        }
+      }
       const commit: Commit = {
         sha: graphCommit.sha,
         message: graphCommit.message,
@@ -358,14 +367,13 @@ export class GitHub implements Scm {
         pr => {
           return (
             // Only match the pull request with a merge commit if there is a
-            // single merged commit in the PR. This means merge commits and squash
-            // merges will be matched, but rebase merged PRs will only be matched
-            // if they contain a single commit. This is so PRs that are rebased
-            // and merged will have ßSfiles backfilled from each commit instead of
-            // the whole PR.
+            // single merged commit in the PR, or if ignoreIntraBranchCommits is enabled.
+            // This means merge commits and squash merges will be matched, but rebase
+            // merged PRs will only be matched if they contain a single commit.
             pr.mergeCommit &&
             pr.mergeCommit.oid === graphCommit.sha &&
-            mergeCommitCount[pr.mergeCommit.oid] === 1
+            (options.ignoreIntraBranchCommits ||
+              mergeCommitCount[pr.mergeCommit.oid] === 1)
           );
         }
       );
